@@ -10,6 +10,7 @@ if input("Do you want to download projects (y/n): ").lower().strip() in ("yes", 
         autograder.install_chrome_driver()
 
     projects = input("List Projects separated by spaces: ").split(" ")
+    print("Downloading Projects")
     autograder.download_projects(*projects, download_dir=proj_dir)
     autograder.compile_projects(projects_dir=proj_dir)
 

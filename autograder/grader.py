@@ -175,10 +175,11 @@ def _compile_project(path: str) -> [bool, str]:
     :return: True if successful False if not, path
     """
     main_file = _get_main_file(path)
+
     if not main_file:
         return False, path
     else:
-        subprocess.run(["javac", "-sourcepath", ".", main_file])
+        subprocess.run(["javac", main_file], cwd=path)
         return True, path
 
 
