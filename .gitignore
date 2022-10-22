@@ -1,0 +1,5 @@
+config/cookies.txt
+chromedriver
+.idea
+venv
+projects/*
