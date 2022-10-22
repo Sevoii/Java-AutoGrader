@@ -26,7 +26,9 @@ Although running locally right now, in the future I hope to expand this to use o
 
 This downloads a zip from the repl.it, though you must be logged in to actually get the download. Then, it unzips and 
 deletes all unnecessary files. It then compiles all the java files and runs it using python's subprocess library and
-compares it to the output
+compares it to the output.
+
+You can also bypass the replit step entirely, by pasting your .java files in :>
 
 ---
 
