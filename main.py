@@ -10,7 +10,6 @@ if input("Do you want to download projects (y/n): ").lower().strip() in ("yes", 
         autograder.install_chrome_driver()
 
     projects = input("List Projects separated by spaces: ").split(" ")
-    print("Downloading Projects")
     autograder.download_projects(*projects, download_dir=proj_dir)
     autograder.compile_projects(projects_dir=proj_dir)
 
@@ -20,4 +19,4 @@ if input("Do you want to test projects (y/n): ").lower().strip() in ("yes", "y")
 
     resp = autograder.test_projects(projects_dir=proj_dir)
     for i, j in resp.items():
-        print(f"Project `{i}` Tests: {sum(k[0] for k in j)}/{len(j)}")
+        print(f"Project `{i}` Passed Tests: {sum(k[0] for k in j)}/{len(j)}")
