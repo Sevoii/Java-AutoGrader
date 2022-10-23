@@ -18,7 +18,7 @@ def _read_cookies() -> List[Dict]:
     :return: List of cookies
     """
     cookies = []
-    with open(os.path.normpath(__file__ + "/../../config/cookies.txt"), 'r') as f:  # Cookie file
+    with open(os.path.abspath(__file__ + "/../../config/cookies.txt"), 'r') as f:  # Cookie file
         for e in f:
             e = e.strip()
             if e.startswith('#'):
@@ -92,7 +92,9 @@ def download_projects(*input_projects: str, download_dir: str = "") -> None:
     :return: None
     """
     if not download_dir:  # Default value
-        download_dir = os.path.normpath(__file__ + "/../../projects")
+        download_dir = os.path.abspath(__file__ + "/../../projects")
+    else:
+        download_dir = os.path.abspath(download_dir)
 
     projects = _get_valid_projects(input_projects)
 
@@ -102,7 +104,7 @@ def download_projects(*input_projects: str, download_dir: str = "") -> None:
     chrome_options.add_experimental_option('prefs', prefs)
 
     # headless
-    chrome_options.headless = True
+    # chrome_options.headless = True
 
     if in_replit():  # We need these settings if we're running in replit
         chrome_options.add_argument('--no-sandbox')
@@ -112,7 +114,7 @@ def download_projects(*input_projects: str, download_dir: str = "") -> None:
         driver = webdriver.Chrome(options=chrome_options)
     else:
         # Setting driver location
-        ser = Service(os.path.normpath(get_chrome_driver()))
+        ser = Service(os.path.abspath(get_chrome_driver()))
         driver = webdriver.Chrome(service=ser, options=chrome_options)
 
     driver.get("https://replit.com/")
@@ -186,7 +188,7 @@ def _get_file_name(path: str) -> str:
 
     # C:\something\filename.ext -> filename.ext -> filename
     # split("/") for linux support
-    return os.path.normpath(path).split("\\")[-1].split("/")[-1].rsplit(".", 1)[0]
+    return os.path.abspath(path).split("\\")[-1].split("/")[-1].rsplit(".", 1)[0]
 
 
 def _compile_project(path: str) -> [bool, str]:
@@ -224,7 +226,7 @@ def compile_projects(projects_dir: str = "") -> None:
     :return: None
     """
     if not projects_dir:  # Default value
-        projects_dir = os.path.normpath(__file__ + "/../../projects")
+        projects_dir = os.path.abspath(__file__ + "/../../projects")
 
     executor = ThreadPoolExecutor(20)  # Only 20 threads cause :>
     futures = []
@@ -266,7 +268,7 @@ def _test_project(project_path: str, std_input: str, std_output: str) -> (bool, 
     return std_output == resp, proc.returncode
 
 
-def _get_tests(project_dir: str = os.path.normpath(__file__ + "/../../projects")) -> List[Tuple[str, str]]:
+def _get_tests(project_dir: str = os.path.abspath(__file__ + "/../../projects")) -> List[Tuple[str, str]]:
     """
     Gets all of the tests in directory
     :param project_dir: Project Directory, default `__file__ + "/../../projects"`
@@ -308,7 +310,7 @@ def test_projects(projects_dir: str = "") -> Dict[str, List[Tuple[str, str]]]:
     :return: dict - project_name: [(success, exit_code)]
     """
     if not projects_dir:  # Default value
-        projects_dir = os.path.normpath(__file__ + "/../../projects")
+        projects_dir = os.path.abspath(__file__ + "/../../projects")
 
     executor = ThreadPoolExecutor(20)  # Only 30 threads cause why not :>
 
