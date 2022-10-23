@@ -15,13 +15,18 @@ def install_chrome_driver() -> bool:
     if get_chrome_driver():  # Don't download if already installed
         return True
 
+    if in_replit():  # Replit automatically installs chrome driver for us
+        return True
+
     # Get correct url
     if platform.system() == "Windows":
         url = "https://chromedriver.storage.googleapis.com/106.0.5249.61/chromedriver_win32.zip"
     elif platform.system() == "Darwin":
         url = "https://chromedriver.storage.googleapis.com/106.0.5249.61/chromedriver_mac64.zip"
+        raise RuntimeError("MAC is not supported yet, message me if you want to help")
     else:
         url = "https://chromedriver.storage.googleapis.com/106.0.5249.61/chromedriver_linux64.zip"
+        raise RuntimeError("Linux is not supported yet, message me if you want to help")
 
     resp = requests.get(url, timeout=10)
     if resp.status_code != 200:  # Make sure 200 code
@@ -38,6 +43,9 @@ def install_chrome_driver() -> bool:
 
 
 def get_chrome_driver() -> Optional[str]:
+    if in_replit():  # Replit automatically installs chrome driver for us
+        return None
+
     path = __file__ + "/../../chromedriver/chromedriver"
     if platform.system() == "Windows":
         path += ".exe"
@@ -71,3 +79,7 @@ def cleanup_folder(delete_existing=True, projects_dir: str = "") -> None:
         for p in os.listdir(projects_dir):
             if p != "tests":
                 shutil.rmtree(f"{projects_dir}/{p}", ignore_errors=True)
+
+
+def in_replit():
+    return os.path.exists(os.path.normpath(__file__ + "/../../.replit"))

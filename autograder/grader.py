@@ -8,7 +8,7 @@ from typing import Optional, List, Dict, Tuple
 import subprocess
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import shutil
-from autograder.setup import get_chrome_driver
+from autograder.setup import get_chrome_driver, in_replit
 
 
 # I literally have no clue what this does
@@ -104,9 +104,17 @@ def download_projects(*input_projects: str, download_dir: str = "") -> None:
     # headless
     chrome_options.headless = True
 
-    # Setting driver location
-    ser = Service(os.path.normpath(get_chrome_driver()))
-    driver = webdriver.Chrome(service=ser, options=chrome_options)
+    if in_replit():  # We need these settings if we're running in replit
+        chrome_options.add_argument('--no-sandbox')
+        chrome_options.add_argument('--disable-dev-shm-usage')
+
+    if in_replit():  # Don't specify path if we're not in replit
+        driver = webdriver.Chrome(options=chrome_options)
+    else:
+        # Setting driver location
+        ser = Service(os.path.normpath(get_chrome_driver()))
+        driver = webdriver.Chrome(service=ser, options=chrome_options)
+
     driver.get("https://replit.com/")
 
     # Loading cookies
@@ -251,7 +259,7 @@ def _test_project(project_path: str, std_input: str, std_output: str) -> (bool, 
 
     # A bunch of weird stuff with subprocess
     proc = subprocess.run(["java", file_name], cwd=project_path, input=std_input, text=True, capture_output=True,
-                          timeout=3)
+                          timeout=10)
 
     # Just normalizing the output
     resp = proc.stdout.strip().replace("\r\n", "\n")
