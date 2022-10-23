@@ -4,20 +4,21 @@ from selenium.webdriver.chrome.service import Service
 import os
 import time
 import zipfile
-from typing import Optional
+from typing import Optional, List, Dict, Tuple
 import subprocess
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import shutil
+from autograder.setup import get_chrome_driver, in_replit
 
 
 # I literally have no clue what this does
-def _read_cookies() -> list[dict]:
+def _read_cookies() -> List[Dict]:
     """
     Reads cookies from cookie file and returns a dict
     :return: List of cookies
     """
     cookies = []
-    with open(__file__ + "/../../config/cookies.txt", 'r') as f:  # Cookie file
+    with open(os.path.abspath(__file__ + "/../../config/cookies.txt"), 'r') as f:  # Cookie file
         for e in f:
             e = e.strip()
             if e.startswith('#'):
@@ -30,7 +31,7 @@ def _read_cookies() -> list[dict]:
     return cookies
 
 
-def _get_valid_projects(input_projects: tuple[str]) -> list[str]:
+def _get_valid_projects(input_projects: Tuple[str]) -> List[str]:
     """
     Returns the list of valid projects formatted correctly
     :param input_projects: List of inputted projects
@@ -91,21 +92,31 @@ def download_projects(*input_projects: str, download_dir: str = "") -> None:
     :return: None
     """
     if not download_dir:  # Default value
-        download_dir = __file__ + "/../../projects"
+        download_dir = os.path.abspath(__file__ + "/../../projects")
+    else:
+        download_dir = os.path.abspath(download_dir)
 
     projects = _get_valid_projects(input_projects)
 
     # Selenium requires absolute paths for download
     chrome_options = webdriver.ChromeOptions()
-    prefs = {"download.default_directory": os.path.normpath(download_dir)}
+    prefs = {"download.default_directory": download_dir}
     chrome_options.add_experimental_option('prefs', prefs)
 
     # headless
     chrome_options.headless = True
 
-    # Setting driver location
-    ser = Service(__file__ + "/../../chromedriver/chromedriver.exe")
-    driver = webdriver.Chrome(service=ser, options=chrome_options)
+    if in_replit():  # We need these settings if we're running in replit
+        chrome_options.add_argument('--no-sandbox')
+        chrome_options.add_argument('--disable-dev-shm-usage')
+
+    if in_replit():  # Don't specify path if we're not in replit
+        driver = webdriver.Chrome(options=chrome_options)
+    else:
+        # Setting driver location
+        ser = Service(os.path.abspath(get_chrome_driver()))
+        driver = webdriver.Chrome(service=ser, options=chrome_options)
+
     driver.get("https://replit.com/")
 
     # Loading cookies
@@ -120,6 +131,8 @@ def download_projects(*input_projects: str, download_dir: str = "") -> None:
         driver.quit()
         raise RuntimeError("Reset the cookies so you actually log in")
 
+    temp_index = len(os.listdir(download_dir))  # Making so this is sorted by order you put this in :>
+
     success = []
     failed = []
     for proj in projects:
@@ -131,7 +144,8 @@ def download_projects(*input_projects: str, download_dir: str = "") -> None:
         else:
             temp = proj.split('/')
             # project_name.zip, username-project_name.zip
-            success.append([f"{temp[-1]}.zip", f"{temp[-2]}-{temp[-1]}"])
+            success.append([f"{temp[-1]}.zip", f"{temp_index}-{temp[-2]}-{temp[-1]}"])
+            temp_index += 1
 
     for proj in success:
         _unzip_and_clean(f"{download_dir}/{proj[0]}", f"{download_dir}/{proj[1]}")
@@ -168,6 +182,18 @@ def _get_main_file(path: str) -> Optional[str]:
     return None
 
 
+def _get_file_name(path: str) -> str:
+    """
+    Gets the file name w/o extension
+    :param path: Path to file
+    :return: Name of file
+    """
+
+    # C:\something\filename.ext -> filename.ext -> filename
+    # split("/") for linux support
+    return os.path.abspath(path).split("\\")[-1].split("/")[-1].rsplit(".", 1)[0]
+
+
 def _compile_project(path: str) -> [bool, str]:
     """
     Compile a single project (internal)
@@ -179,7 +205,7 @@ def _compile_project(path: str) -> [bool, str]:
     if not main_file:
         return False, path
     else:
-        subprocess.run(["javac", main_file], cwd=path)
+        subprocess.run(["javac", f"{_get_file_name(main_file)}.java"], cwd=path)  # Another hack :p
         return True, path
 
 
@@ -203,7 +229,7 @@ def compile_projects(projects_dir: str = "") -> None:
     :return: None
     """
     if not projects_dir:  # Default value
-        projects_dir = __file__ + "/../../projects"
+        projects_dir = os.path.abspath(__file__ + "/../../projects")
 
     executor = ThreadPoolExecutor(20)  # Only 20 threads cause :>
     futures = []
@@ -222,17 +248,6 @@ def compile_projects(projects_dir: str = "") -> None:
     executor.shutdown()
 
 
-def _get_file_name(path: str) -> str:
-    """
-    Gets the file name w/o extension
-    :param path: Path to file
-    :return: Name of file
-    """
-
-    # C:\something\filename.ext -> filename.ext -> filename
-    return os.path.normpath(path).split("\\")[-1].rsplit(".", 1)[0]
-
-
 def _test_project(project_path: str, std_input: str, std_output: str) -> (bool, int):
     """
     Tests a project with an input and an output
@@ -249,14 +264,14 @@ def _test_project(project_path: str, std_input: str, std_output: str) -> (bool, 
 
     # A bunch of weird stuff with subprocess
     proc = subprocess.run(["java", file_name], cwd=project_path, input=std_input, text=True, capture_output=True,
-                          timeout=3)
+                          timeout=10)
 
     # Just normalizing the output
     resp = proc.stdout.strip().replace("\r\n", "\n")
     return std_output == resp, proc.returncode
 
 
-def _get_tests(project_dir: str = __file__ + "/../../projects") -> list[tuple[str, str]]:
+def _get_tests(project_dir: str = os.path.abspath(__file__ + "/../../projects")) -> List[Tuple[str, str]]:
     """
     Gets all of the tests in directory
     :param project_dir: Project Directory, default `__file__ + "/../../projects"`
@@ -266,7 +281,7 @@ def _get_tests(project_dir: str = __file__ + "/../../projects") -> list[tuple[st
 
     # Make sure there's actually a test dir :>
     if not os.path.exists(f"{project_dir}/tests"):
-        return tests
+        raise RuntimeError("Could not find the `tests` dir, make sure it's there and you inputted the proper path")
 
     for file in os.listdir(f"{project_dir}/tests"):
         # Just skip over everything that isn't an .in :>
@@ -288,17 +303,19 @@ def _get_tests(project_dir: str = __file__ + "/../../projects") -> list[tuple[st
             temp_output = f.read().strip()
 
         tests.append((temp_input, temp_output))
+
+    print(f"Successfully loaded {len(tests)} tests")
     return tests
 
 
-def test_projects(projects_dir: str = "") -> dict[str, list[tuple[str, str]]]:
+def test_projects(projects_dir: str = "") -> Dict[str, List[Tuple[str, str]]]:
     """
     Tests all projects in a directory
     :param projects_dir: Project Directory, default `__file__ + "/../../projects"`
     :return: dict - project_name: [(success, exit_code)]
     """
     if not projects_dir:  # Default value
-        projects_dir = __file__ + "/../../projects"
+        projects_dir = os.path.abspath(__file__ + "/../../projects")
 
     executor = ThreadPoolExecutor(20)  # Only 30 threads cause why not :>
 

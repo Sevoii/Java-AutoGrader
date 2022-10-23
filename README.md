@@ -68,3 +68,12 @@ Rectangle width:
 Rectangle Perimeter: 160
 Rectangle Area: 1500
 ``` 
+
+---
+
+### How to set this up on Repl.it
+
+1. Download this repository (or clone it) into a new Python Repl
+2. In the terminal side, click shell and run `java -version`
+3. When it prompts you to select a java version, select the `adoptopenjdk-openj9-bin-16`
+4. Click in the green run button at the top

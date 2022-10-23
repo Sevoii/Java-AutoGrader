@@ -3,10 +3,10 @@ import autograder
 proj_dir = ""
 if input("Do you want to download projects (y/n): ").lower().strip() in ("yes", "y"):
     flag = input("Do you want to delete old projects - saying no may lead to errors (y/n): ").lower() in ("yes", "y")
-    proj_dir = input("Specify Project Dir (absolute paths, entering nothing will use default): ")
+    proj_dir = input("Specify Project Dir (entering nothing will use default): ")
     autograder.cleanup_folder(delete_existing=flag, projects_dir=proj_dir)
 
-    if not autograder.has_chrome_driver():
+    if not autograder.get_chrome_driver():
         autograder.install_chrome_driver()
 
     projects = input("List Projects separated by spaces: ").split(" ")
@@ -15,7 +15,7 @@ if input("Do you want to download projects (y/n): ").lower().strip() in ("yes", 
 
 if input("Do you want to test projects (y/n): ").lower().strip() in ("yes", "y"):
     if not proj_dir:
-        proj_dir = input("Specify Project Dir (absolute paths, entering nothing will use default): ")
+        proj_dir = input("Specify Project Dir (entering nothing will use default): ")
 
     resp = autograder.test_projects(projects_dir=proj_dir)
     for i, j in resp.items():
