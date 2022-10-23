@@ -26,13 +26,13 @@ def install_chrome_driver() -> bool:
     if resp.status_code != 200:  # Make sure 200 code
         return False
 
-    with open(__file__ + "/../../chrome.zip", "wb") as f:  # Write zip file
+    with open(os.path.normpath(__file__ + "/../../chrome.zip"), "wb") as f:  # Write zip file
         f.write(resp.content)
 
-    with zipfile.ZipFile(__file__ + "/../../chrome.zip", "r") as f:  # Unzip zip file
-        f.extractall(__file__ + "/../../chromedriver")
+    with zipfile.ZipFile(os.path.normpath(__file__ + "/../../chrome.zip"), "r") as f:  # Unzip zip file
+        f.extractall(os.path.normpath(__file__ + "/../../chromedriver"))
 
-    os.remove(__file__ + "/../../chrome.zip")  # Delete zip file
+    os.remove(os.path.normpath(__file__ + "/../../chrome.zip"))  # Delete zip file
     return True
 
 
@@ -41,7 +41,7 @@ def has_chrome_driver() -> bool:
     Checks to see if the Chrome Driver is installed
     :return: If driver is there or not
     """
-    return os.path.isfile(__file__ + "/../../chromedriver/chromedriver.exe")
+    return os.path.isfile(os.path.normpath(__file__ + "/../../chromedriver/chromedriver.exe"))
 
 
 def cleanup_folder(delete_existing=True, projects_dir: str = "") -> None:
@@ -52,7 +52,7 @@ def cleanup_folder(delete_existing=True, projects_dir: str = "") -> None:
     :return: None
     """
     if not projects_dir:  # Default value
-        projects_dir = __file__ + "/../../projects"
+        projects_dir = os.path.normpath(__file__ + "/../../projects")
 
     os.makedirs(projects_dir, exist_ok=True)  # Creates folder :>
 
