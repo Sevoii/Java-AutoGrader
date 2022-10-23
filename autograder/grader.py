@@ -4,14 +4,14 @@ from selenium.webdriver.chrome.service import Service
 import os
 import time
 import zipfile
-from typing import Optional
+from typing import Optional, List, Dict, Tuple
 import subprocess
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import shutil
 
 
 # I literally have no clue what this does
-def _read_cookies() -> list[dict]:
+def _read_cookies() -> List[Dict]:
     """
     Reads cookies from cookie file and returns a dict
     :return: List of cookies
@@ -30,7 +30,7 @@ def _read_cookies() -> list[dict]:
     return cookies
 
 
-def _get_valid_projects(input_projects: tuple[str]) -> list[str]:
+def _get_valid_projects(input_projects: Tuple[str]) -> List[str]:
     """
     Returns the list of valid projects formatted correctly
     :param input_projects: List of inputted projects
@@ -256,7 +256,7 @@ def _test_project(project_path: str, std_input: str, std_output: str) -> (bool, 
     return std_output == resp, proc.returncode
 
 
-def _get_tests(project_dir: str = __file__ + "/../../projects") -> list[tuple[str, str]]:
+def _get_tests(project_dir: str = __file__ + "/../../projects") -> List[Tuple[str, str]]:
     """
     Gets all of the tests in directory
     :param project_dir: Project Directory, default `__file__ + "/../../projects"`
@@ -291,7 +291,7 @@ def _get_tests(project_dir: str = __file__ + "/../../projects") -> list[tuple[st
     return tests
 
 
-def test_projects(projects_dir: str = "") -> dict[str, list[tuple[str, str]]]:
+def test_projects(projects_dir: str = "") -> Dict[str, List[Tuple[str, str]]]:
     """
     Tests all projects in a directory
     :param projects_dir: Project Directory, default `__file__ + "/../../projects"`
