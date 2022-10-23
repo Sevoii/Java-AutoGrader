@@ -98,14 +98,14 @@ def download_projects(*input_projects: str, download_dir: str = "") -> None:
 
     # Selenium requires absolute paths for download
     chrome_options = webdriver.ChromeOptions()
-    prefs = {"download.default_directory": get_chrome_driver()}
+    prefs = {"download.default_directory": download_dir}
     chrome_options.add_experimental_option('prefs', prefs)
 
     # headless
     chrome_options.headless = True
 
     # Setting driver location
-    ser = Service(os.path.normpath(__file__ + "/../../chromedriver/chromedriver.exe"))
+    ser = Service(os.path.normpath(get_chrome_driver()))
     driver = webdriver.Chrome(service=ser, options=chrome_options)
     driver.get("https://replit.com/")
 
@@ -169,6 +169,18 @@ def _get_main_file(path: str) -> Optional[str]:
     return None
 
 
+def _get_file_name(path: str) -> str:
+    """
+    Gets the file name w/o extension
+    :param path: Path to file
+    :return: Name of file
+    """
+
+    # C:\something\filename.ext -> filename.ext -> filename
+    # split("/") for linux support
+    return os.path.normpath(path).split("\\")[-1].split("/")[-1].rsplit(".", 1)[0]
+
+
 def _compile_project(path: str) -> [bool, str]:
     """
     Compile a single project (internal)
@@ -180,7 +192,7 @@ def _compile_project(path: str) -> [bool, str]:
     if not main_file:
         return False, path
     else:
-        subprocess.run(["javac", main_file], cwd=path)
+        subprocess.run(["javac", f"{_get_file_name(main_file)}.java"], cwd=path)  # Another hack :p
         return True, path
 
 
@@ -221,17 +233,6 @@ def compile_projects(projects_dir: str = "") -> None:
             shutil.rmtree(path, ignore_errors=True)  # Deletes entire folder :skull:
 
     executor.shutdown()
-
-
-def _get_file_name(path: str) -> str:
-    """
-    Gets the file name w/o extension
-    :param path: Path to file
-    :return: Name of file
-    """
-
-    # C:\something\filename.ext -> filename.ext -> filename
-    return os.path.normpath(path).split("\\")[-1].rsplit(".", 1)[0]
 
 
 def _test_project(project_path: str, std_input: str, std_output: str) -> (bool, int):
