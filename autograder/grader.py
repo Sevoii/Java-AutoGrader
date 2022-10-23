@@ -104,7 +104,7 @@ def download_projects(*input_projects: str, download_dir: str = "") -> None:
     chrome_options.add_experimental_option('prefs', prefs)
 
     # headless
-    # chrome_options.headless = True
+    chrome_options.headless = True
 
     if in_replit():  # We need these settings if we're running in replit
         chrome_options.add_argument('--no-sandbox')
@@ -131,6 +131,8 @@ def download_projects(*input_projects: str, download_dir: str = "") -> None:
         driver.quit()
         raise RuntimeError("Reset the cookies so you actually log in")
 
+    temp_index = len(os.listdir(download_dir))  # Making so this is sorted by order you put this in :>
+
     success = []
     failed = []
     for proj in projects:
@@ -142,7 +144,8 @@ def download_projects(*input_projects: str, download_dir: str = "") -> None:
         else:
             temp = proj.split('/')
             # project_name.zip, username-project_name.zip
-            success.append([f"{temp[-1]}.zip", f"{temp[-2]}-{temp[-1]}"])
+            success.append([f"{temp[-1]}.zip", f"{temp_index}-{temp[-2]}-{temp[-1]}"])
+            temp_index += 1
 
     for proj in success:
         _unzip_and_clean(f"{download_dir}/{proj[0]}", f"{download_dir}/{proj[1]}")
@@ -278,7 +281,7 @@ def _get_tests(project_dir: str = os.path.abspath(__file__ + "/../../projects"))
 
     # Make sure there's actually a test dir :>
     if not os.path.exists(f"{project_dir}/tests"):
-        return tests
+        raise RuntimeError("Could not find the `tests` dir, make sure it's there and you inputted the proper path")
 
     for file in os.listdir(f"{project_dir}/tests"):
         # Just skip over everything that isn't an .in :>
@@ -300,6 +303,8 @@ def _get_tests(project_dir: str = os.path.abspath(__file__ + "/../../projects"))
             temp_output = f.read().strip()
 
         tests.append((temp_input, temp_output))
+
+    print(f"Successfully loaded {len(tests)} tests")
     return tests
 
 
