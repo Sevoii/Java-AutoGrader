@@ -3,6 +3,7 @@ import platform
 import zipfile
 import os
 import shutil
+from typing import Optional
 
 
 def install_chrome_driver() -> bool:
@@ -11,7 +12,7 @@ def install_chrome_driver() -> bool:
     :return: True if successfully installed, False if not -> do not proceed if False
     """
 
-    if has_chrome_driver():  # Don't download if already installed
+    if get_chrome_driver():  # Don't download if already installed
         return True
 
     # Get correct url
@@ -36,12 +37,22 @@ def install_chrome_driver() -> bool:
     return True
 
 
-def has_chrome_driver() -> bool:
-    """
-    Checks to see if the Chrome Driver is installed
-    :return: If driver is there or not
-    """
-    return os.path.isfile(os.path.normpath(__file__ + "/../../chromedriver/chromedriver.exe"))
+def get_chrome_driver() -> Optional[str]:
+    path = __file__ + "/../../chromedriver/chromedriver"
+    if platform.system() == "Windows":
+        path += ".exe"
+
+    if os.path.isfile(os.path.normpath(path)):
+        return os.path.normpath(path)
+    return None
+
+
+# def has_chrome_driver() -> bool:
+#     """
+#     Checks to see if the Chrome Driver is installed
+#     :return: If driver is there or not
+#     """
+#     return os.path.isfile(os.path.normpath(__file__ + "/../../chromedriver/chromedriver.exe"))
 
 
 def cleanup_folder(delete_existing=True, projects_dir: str = "") -> None:

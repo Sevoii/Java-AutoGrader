@@ -8,6 +8,7 @@ from typing import Optional, List, Dict, Tuple
 import subprocess
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import shutil
+from autograder.setup import get_chrome_driver
 
 
 # I literally have no clue what this does
@@ -97,7 +98,7 @@ def download_projects(*input_projects: str, download_dir: str = "") -> None:
 
     # Selenium requires absolute paths for download
     chrome_options = webdriver.ChromeOptions()
-    prefs = {"download.default_directory": os.path.normpath(download_dir)}
+    prefs = {"download.default_directory": get_chrome_driver()}
     chrome_options.add_experimental_option('prefs', prefs)
 
     # headless
