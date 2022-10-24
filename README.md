@@ -76,4 +76,8 @@ Rectangle Area: 1500
 1. Download this repository (or clone it) into a new Python Repl
 2. In the terminal side, click shell and run `java -version`
 3. When it prompts you to select a java version, select the `adoptopenjdk-openj9-bin-16`
-4. Click in the green run button at the top
+4. Get [extension](https://chrome.google.com/webstore/detail/get-cookiestxt/bgaddhkoddajcdgocldbbfleckgcbcid) to 
+   download cookies
+5. Open [repl.it](https://replit.com/~), log into your account, and download cookies
+6. Create a file in `/config` called `cookies.txt` and paste cookies in (example in `cookies.txt.example`)
+7. Click in the green run button at the top
