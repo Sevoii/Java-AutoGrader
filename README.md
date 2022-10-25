@@ -80,4 +80,5 @@ Rectangle Area: 1500
    download cookies
 5. Open [repl.it](https://replit.com/~), log into your account, and download cookies
 6. Create a file in `/config` called `cookies.txt` and paste cookies in (example in `cookies.txt.example`)
-7. Click in the green run button at the top
+7. Add Chrome Driver to path [here](https://replit.com/talk/learn/Python-Selenium-Tutorial-The-Basics/148030)
+8. Click in the green run button at the top
