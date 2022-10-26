@@ -19,4 +19,4 @@ if input("Do you want to test projects (y/n): ").lower().strip() in ("yes", "y")
 
     resp = autograder.test_projects(projects_dir=proj_dir)
     for i, j in resp.items():
-        print(f"Project `{i}` Passed Tests: {sum(k[0] for k in j)}/{len(j)}")
+        print(f"Project `{i}` passed {sum(k[0] for k in j)}/{len(j)} Tests: {''.join('X✓'[m[0]] for m in j)}")

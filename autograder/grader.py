@@ -248,12 +248,13 @@ def compile_projects(projects_dir: str = "") -> None:
     executor.shutdown()
 
 
-def _test_project(project_path: str, std_input: str, std_output: str) -> (bool, int):
+def _test_project(project_path: str, std_input: str, std_output: str, tries_left=3) -> (bool, int):
     """
     Tests a project with an input and an output
     :param project_path: Path to project
     :param std_input: Input to supply
     :param std_output: Output Expected
+    :param tries_left: Runs program this many tries before just returning a failure
     :return: Test successful or not, exit code
     """
     main_class = _get_main_file(project_path)
@@ -262,13 +263,20 @@ def _test_project(project_path: str, std_input: str, std_output: str) -> (bool, 
 
     file_name = _get_file_name(main_class)
 
-    # A bunch of weird stuff with subprocess
-    proc = subprocess.run(["java", file_name], cwd=project_path, input=std_input, text=True, capture_output=True,
-                          timeout=10)
+    try:
+        # A bunch of weird stuff with subprocess
+        proc = subprocess.run(["java", file_name], cwd=project_path, input=std_input, text=True, capture_output=True,
+                              timeout=10)
 
-    # Just normalizing the output
-    resp = proc.stdout.strip().replace("\r\n", "\n")
-    return std_output == resp, proc.returncode
+        # Just normalizing the output
+        resp = proc.stdout.strip().replace("\r\n", "\n")
+        return std_output == resp, proc.returncode
+    except subprocess.TimeoutExpired:
+        # Catching timeout error - retrying as necessary
+        if tries_left > 0:
+            return _test_project(project_path, std_input, std_output, tries_left=tries_left - 1)
+        else:
+            return False, 1
 
 
 def _get_tests(project_dir: str = os.path.abspath(__file__ + "/../../projects")) -> List[Tuple[str, str]]:
@@ -308,7 +316,7 @@ def _get_tests(project_dir: str = os.path.abspath(__file__ + "/../../projects"))
     return tests
 
 
-def test_projects(projects_dir: str = "") -> Dict[str, List[Tuple[str, str]]]:
+def test_projects(projects_dir: str = "") -> Dict[str, List[Tuple[bool, int]]]:
     """
     Tests all projects in a directory
     :param projects_dir: Project Directory, default `__file__ + "/../../projects"`
