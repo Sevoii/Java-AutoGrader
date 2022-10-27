@@ -305,7 +305,7 @@ def _get_tests(project_dir: str = os.path.abspath(__file__ + "/../../projects"))
 
         # Reading files
         with open(f"{temp_path}.in", "r") as f:
-            temp_input = f.read().strip()
+            temp_input = f.read().strip().replace("\n", "\n" + " " * 8192) # Overflowing Scanner Buffer
 
         with open(f"{temp_path}.out", "r") as f:
             temp_output = f.read().strip()
