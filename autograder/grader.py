@@ -32,24 +32,38 @@ def _read_cookies() -> List[Dict]:
     return cookies
 
 
+def _sanitize_url(link: str) -> Optional[str]:
+    """
+    Extracted this function out b/c need to sanitize another url
+    :param link: Link to sanitize
+    :return: Repl.it link w/o weird stuff messing with dl
+    """
+    pattern = r"https://(?:(?:replit\.com)|(?:repl\.it))/(?:(?:@\w+/[^#?\s]+)|(?:join/[^#?\s]+))"
+
+    if temp := re.findall(pattern, link):
+        return temp[0]
+
+
 def _get_valid_projects(input_projects: Tuple[str]) -> List[str]:
     """
     Returns the list of valid projects formatted correctly
     :param input_projects: List of inputted projects
     :return: List of valid projects
     """
-    pattern = r"https://(?:(?:replit\.com)|(?:repl\.it))/@\w+/[^#?\s]+"
+    success = []
+    fail = []
 
-    # Filters for good projects
-    projects = [temp[0] for p in input_projects if (temp := re.findall(pattern, p))]
+    for i in input_projects:
+        # We can just append `i` because we are sanitizing it later
+        if _sanitize_url(i):
+            success.append(i)
+        else:
+            fail.append(i)
 
-    # Throw an error if a bad url
-    if len(input_projects) != len(projects):
-        proj_diff = (p for p in input_projects if not re.findall(pattern, p))
-        print(f"Projects that didn't match regex: - {', '.join(proj_diff)}")
-    print(f"Accepted Projects: {', '.join(projects)}")
+    print(f"Rejected Projects: {', '.join(fail)}")
+    print(f"Accepted Projects: {', '.join(success)}")
 
-    return projects
+    return success
 
 
 def _unzip_and_clean(zip_path: str, folder_path: str) -> None:
@@ -107,7 +121,7 @@ def download_projects(*input_projects: str, download_dir: str = "") -> None:
     chrome_options.add_experimental_option('prefs', prefs)
 
     # headless
-    # chrome_options.headless = True
+    chrome_options.headless = True
 
     if in_replit():  # We need these settings if we're running in replit
         chrome_options.add_argument('--no-sandbox')
@@ -116,7 +130,7 @@ def download_projects(*input_projects: str, download_dir: str = "") -> None:
     if in_replit():  # Don't specify path if we're not in replit
         driver = webdriver.Chrome(options=chrome_options)
     else:
-        # Setting driver location
+        # I'm not sure if repl.it can use ChromeDriverManager but it works w/o
         ser = Service(os.path.abspath(ChromeDriverManager().install()))
         driver = webdriver.Chrome(service=ser, options=chrome_options)
 
@@ -136,25 +150,30 @@ def download_projects(*input_projects: str, download_dir: str = "") -> None:
 
     temp_index = len(os.listdir(download_dir))  # Making so this is sorted by order you put this in :>
 
-    # success = []
-    # failed = []
     for proj in projects:
         driver.get(proj)
-        print(driver.current_url)
 
-    #     driver.get(f"{proj}.zip")
-    #
-    #     # It will go to this url if it fails to download
-    #     if driver.current_url == f"{proj}.zip":
-    #         failed.append(proj)
-    #     else:
-    #         temp = proj.split('/')
-    #         # project_name.zip, username-project_name.zip
-    #         success.append([f"{temp[-1]}.zip", f"{temp_index}-{temp[-2]}-{temp[-1]}"])
-    #         temp_index += 1
-    #
-    # for proj in success:
-    #     _unzip_and_clean(f"{download_dir}/{proj[0]}", f"{download_dir}/{proj[1]}")
+        if "404" in driver.title:  # Actually checking if link works
+            print(f"Could not get replit for project {proj}")
+            continue
+
+        formatted = _sanitize_url(f"{driver.current_url}")
+        if not formatted:  # This really shouldn't happen but it'll be fine
+            print(f"This should not occur! Could not sanitize url {driver.current_url}?")
+            continue
+
+        new_url = f"{formatted}.zip"  # Zipped url :>
+        driver.get(new_url)
+
+        if driver.current_url != new_url:  # It won't redirect if it's downloading
+            *_, user, name = formatted.split("/")
+
+            # Doing this now so we can limit how fast we download
+            _unzip_and_clean(os.path.abspath(f"{download_dir}/{name}.zip"),
+                             os.path.abspath(f"{download_dir}/{temp_index}-{user}-{name}"))
+            temp_index += 1
+        else:
+            print(f"Could not get download zip for project {proj}")
 
     # Cleaning up
     driver.quit()
