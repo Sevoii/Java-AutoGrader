@@ -37,12 +37,14 @@ def _get_valid_projects(input_projects: Tuple[str]) -> List[str]:
     :param input_projects: List of inputted projects
     :return: List of valid projects
     """
+    pattern = r"https://(?:(?:replit\.com)|(?:repl\.it))/@\w+/[^#?\s]+"
+    
     # Filters for good projects
-    projects = [temp[0] for p in input_projects if (temp := re.findall(r"https://replit\.com/@\w+/[^#?]+", p))]
+    projects = [temp[0] for p in input_projects if (pattern := re.findall(pattern, p))]
 
     # Throw an error if a bad url
     if len(input_projects) != len(projects):
-        proj_diff = (p for p in input_projects if not re.findall(r"https://replit\.com/@\w+/[^#?]+", p))
+        proj_diff = (p for p in input_projects if not re.findall(pattern, p))
         print(f"Projects that didn't match regex: - {', '.join(proj_diff)}")
     print(f"Accepted Projects: {', '.join(projects)}")
 
