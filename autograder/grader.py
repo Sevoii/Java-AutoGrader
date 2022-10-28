@@ -1,6 +1,7 @@
 import re
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
 import os
 import time
 import zipfile
@@ -8,7 +9,7 @@ from typing import Optional, List, Dict, Tuple
 import subprocess
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import shutil
-from autograder.setup import get_chrome_driver, in_replit
+from autograder.setup import in_replit
 
 
 # I literally have no clue what this does
@@ -38,9 +39,9 @@ def _get_valid_projects(input_projects: Tuple[str]) -> List[str]:
     :return: List of valid projects
     """
     pattern = r"https://(?:(?:replit\.com)|(?:repl\.it))/@\w+/[^#?\s]+"
-    
+
     # Filters for good projects
-    projects = [temp[0] for p in input_projects if (pattern := re.findall(pattern, p))]
+    projects = [temp[0] for p in input_projects if (temp := re.findall(pattern, p))]
 
     # Throw an error if a bad url
     if len(input_projects) != len(projects):
@@ -106,7 +107,7 @@ def download_projects(*input_projects: str, download_dir: str = "") -> None:
     chrome_options.add_experimental_option('prefs', prefs)
 
     # headless
-    chrome_options.headless = True
+    # chrome_options.headless = True
 
     if in_replit():  # We need these settings if we're running in replit
         chrome_options.add_argument('--no-sandbox')
@@ -116,7 +117,7 @@ def download_projects(*input_projects: str, download_dir: str = "") -> None:
         driver = webdriver.Chrome(options=chrome_options)
     else:
         # Setting driver location
-        ser = Service(os.path.abspath(get_chrome_driver()))
+        ser = Service(os.path.abspath(ChromeDriverManager().install()))
         driver = webdriver.Chrome(service=ser, options=chrome_options)
 
     driver.get("https://replit.com/")
@@ -135,22 +136,25 @@ def download_projects(*input_projects: str, download_dir: str = "") -> None:
 
     temp_index = len(os.listdir(download_dir))  # Making so this is sorted by order you put this in :>
 
-    success = []
-    failed = []
+    # success = []
+    # failed = []
     for proj in projects:
-        driver.get(f"{proj}.zip")
+        driver.get(proj)
+        print(driver.current_url)
 
-        # It will go to this url if it fails to download
-        if driver.current_url == f"{proj}.zip":
-            failed.append(proj)
-        else:
-            temp = proj.split('/')
-            # project_name.zip, username-project_name.zip
-            success.append([f"{temp[-1]}.zip", f"{temp_index}-{temp[-2]}-{temp[-1]}"])
-            temp_index += 1
-
-    for proj in success:
-        _unzip_and_clean(f"{download_dir}/{proj[0]}", f"{download_dir}/{proj[1]}")
+    #     driver.get(f"{proj}.zip")
+    #
+    #     # It will go to this url if it fails to download
+    #     if driver.current_url == f"{proj}.zip":
+    #         failed.append(proj)
+    #     else:
+    #         temp = proj.split('/')
+    #         # project_name.zip, username-project_name.zip
+    #         success.append([f"{temp[-1]}.zip", f"{temp_index}-{temp[-2]}-{temp[-1]}"])
+    #         temp_index += 1
+    #
+    # for proj in success:
+    #     _unzip_and_clean(f"{download_dir}/{proj[0]}", f"{download_dir}/{proj[1]}")
 
     # Cleaning up
     driver.quit()
@@ -307,7 +311,7 @@ def _get_tests(project_dir: str = os.path.abspath(__file__ + "/../../projects"))
 
         # Reading files
         with open(f"{temp_path}.in", "r") as f:
-            temp_input = f.read().strip().replace("\n", "\n" + " " * 8192) # Overflowing Scanner Buffer
+            temp_input = f.read().strip().replace("\n", "\n" + " " * 8192)  # Overflowing Scanner Buffer
 
         with open(f"{temp_path}.out", "r") as f:
             temp_output = f.read().strip()

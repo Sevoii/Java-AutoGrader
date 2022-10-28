@@ -6,9 +6,6 @@ if input("Do you want to download projects (y/n): ").lower().strip() in ("yes", 
     proj_dir = input("Specify Project Dir (entering nothing will use default): ")
     autograder.cleanup_folder(delete_existing=flag, projects_dir=proj_dir)
 
-    if not autograder.get_chrome_driver():
-        autograder.install_chrome_driver()
-
     projects = input("List Projects separated by spaces: ").split(" ")
     autograder.download_projects(*projects, download_dir=proj_dir)
     autograder.compile_projects(projects_dir=proj_dir)
