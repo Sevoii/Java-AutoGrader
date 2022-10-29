@@ -1,4 +1,5 @@
 import autograder
+from colorama import Fore, Style
 
 proj_dir = ""
 if input("Do you want to download projects (y/n): ").lower().strip() in ("yes", "y"):
@@ -16,4 +17,5 @@ if input("Do you want to test projects (y/n): ").lower().strip() in ("yes", "y")
 
     resp = autograder.test_projects(projects_dir=proj_dir)
     for i, j in resp.items():
-        print(f"Project `{i}` passed {sum(k[0] for k in j)}/{len(j)} Tests: {''.join('X✓'[m[0]] for m in j)}")
+        print(
+            f"Project `{i}` passed {sum(k[0] for k in j)}/{len(j)} Tests: {''.join([f'{Fore.RED}X', f'{Fore.BLUE}✓'][m[0]] for m in j)}{Style.RESET_ALL}")
