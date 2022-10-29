@@ -241,7 +241,7 @@ def _get_projects(project_dir: str) -> str:
     :return: List of projects
     """
 
-    for path in os.listdir(project_dir):
+    for path in sorted(os.listdir(project_dir), key=lambda x: int(x.split("-")[0]) if x != "tests" else 0):
         if path == "tests":
             continue
         yield f"{project_dir}/{path}"
