@@ -5,3 +5,5 @@ venv
 
 /projects/*/*
 !/projects/*/tests
+
+mixins/blah/*
