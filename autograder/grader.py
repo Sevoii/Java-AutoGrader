@@ -1,4 +1,5 @@
 import re
+import json
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
@@ -179,6 +180,44 @@ def download_projects(*input_projects: str, download_dir: str = "") -> None:
     driver.quit()
 
 
+def _load_mixins() -> List[str]:
+    """
+    Loads the mixins found in mixins/mixins.json
+    :return: Mixins
+    """
+    with open(os.path.join(__file__, "../mixins/mixins.json")) as f:
+        return json.load(f)
+
+
+def _inject_mixins(file_path: str, mixins: Dict[str, List[Dict[str, str]]]) -> bool:
+    """
+    Injects mixins into a file
+    :param file_path: Path of file to inject
+    :param mixins: Mixins
+    :return: Successful or not
+    """
+    if not os.path.exists(file_path):
+        return False
+
+    with open(file_path) as f:
+        contents = f.read()
+
+    imports = "\n".join(f"import {i};" for i in mixins)  # precomputing b/c need to use later
+    if m := re.search(r"\s*package\s+.+;\n", contents):  # looking for package at start of file b/c imports after
+        contents = contents[:m.end()] + imports + contents[m.end():]
+    else:
+        contents = imports + contents
+
+    for lst in mixins.values():
+        for v in lst:
+            contents = re.sub(v["regex"], v["replace"], contents)
+
+    with open(file_path, "w") as f:
+        f.write(contents)
+
+    return True
+
+
 def _get_main_file(path: str) -> Optional[str]:
     """
     Gets the first instance of public static void main(String[] args)
@@ -188,7 +227,7 @@ def _get_main_file(path: str) -> Optional[str]:
     # So many \s cause you can put new lines/spaces like in so many places .-.
     # We are only checking if there's a public static void main(String[] args), not if it's commented out or not
     # I will fail you if you just have it commented though cause I'm mean like that
-    pattern = r"public\s+static\s+void\s+main\s*\(((String\s*\[\s*]\s*args)|(String\s+args\s*\[\s*]))\)"
+    pattern = r"public\s+static\s+void\s+main\s*\(((String\s*\[\s*]\s*[A-Za-z_]\w*)|(String\s+[A-Za-z_]\w*\s*\[\s*]))\)"
 
     files = []
     for path, _, files1 in os.walk(path):
@@ -219,10 +258,11 @@ def _get_file_name(path: str) -> str:
     return os.path.abspath(path).split("\\")[-1].split("/")[-1].rsplit(".", 1)[0]
 
 
-def _compile_project(path: str) -> [bool, str]:
+def _compile_project(path: str, mixins: Dict[str, List[Dict[str, str]]]) -> [bool, str]:
     """
     Compile a single project (internal)
     :param path: Path to project
+    :param mixins: Mixins to inject
     :return: True if successful False if not, path
     """
     main_file = _get_main_file(path)
@@ -230,7 +270,15 @@ def _compile_project(path: str) -> [bool, str]:
     if not main_file:
         return False, path
     else:
-        subprocess.run(["javac", f"{_get_file_name(main_file)}.java"], cwd=path)  # Another hack :p
+        # Injecting mixins
+        for path, _, files1 in os.walk(path):
+            for file in files1:
+                if file.endswith(".java"):
+                    if not _inject_mixins(os.path.join(path, file), mixins):
+                        return False, path
+
+        subprocess.run(["javac", "-cp", os.path.abspath(os.path.join(__file__, "../mixins/*")),
+                        f"{_get_file_name(main_file)}.java"], cwd=path)  # Another hack :p
         return True, path
 
 
@@ -256,11 +304,13 @@ def compile_projects(projects_dir: str = "") -> None:
     if not projects_dir:  # Default value
         projects_dir = os.path.abspath(__file__ + "/../../projects")
 
+    mixins = _load_mixins()
+
     executor = ThreadPoolExecutor(20)  # Only 20 threads cause :>
     futures = []
 
     for proj in _get_projects(projects_dir):
-        futures.append(executor.submit(_compile_project, proj))
+        futures.append(executor.submit(_compile_project, proj, mixins))
 
     # Wait as all the futures get completed
     for f in as_completed(futures):
@@ -290,8 +340,8 @@ def _test_project(project_path: str, std_input: str, std_output: str, tries_left
 
     try:
         # A bunch of weird stuff with subprocess
-        proc = subprocess.run(["java", file_name], cwd=project_path, input=std_input, text=True, capture_output=True,
-                              timeout=10)
+        proc = subprocess.run(["java", "-cp", os.path.abspath(os.path.join(__file__, "../mixins/*")), file_name],
+                              cwd=project_path, input=std_input, text=True, capture_output=True, timeout=10)
 
         # Just normalizing the output
         resp = proc.stdout.strip().replace("\r\n", "\n")
