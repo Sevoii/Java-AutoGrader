@@ -1,8 +1,8 @@
 {
   "blah.MixinMath": [
     {
-      "regex": "(?<=\\W|^)Math\\s*\\.\\s*random\\s*\\(\\s*\\)",
-      "replace": "MixinMath.random()"
+      "regex": "(\\W|^)Math\\s*\\.\\s*random\\s*\\(\\s*\\)",
+      "replace": "\\1MixinMath.random()"
     }
   ]
 }

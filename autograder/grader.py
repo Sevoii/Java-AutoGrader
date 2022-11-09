@@ -1,15 +1,18 @@
-import re
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import json
+import re
+import os
+import platform
+import shutil
+import subprocess
+import time
+from typing import Optional, List, Dict, Tuple
+import zipfile
+
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
-import os
-import time
-import zipfile
-from typing import Optional, List, Dict, Tuple
-import subprocess
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import shutil
+
 from autograder.setup import in_replit
 
 
@@ -185,7 +188,7 @@ def _load_mixins() -> List[str]:
     Loads the mixins found in mixins/mixins.json
     :return: Mixins
     """
-    with open(os.path.join(__file__, "../mixins/mixins.json")) as f:
+    with open(os.path.join(__file__, "../../mixins/mixins.json")) as f:
         return json.load(f)
 
 
@@ -277,7 +280,7 @@ def _compile_project(path: str, mixins: Dict[str, List[Dict[str, str]]]) -> [boo
                     if not _inject_mixins(os.path.join(path, file), mixins):
                         return False, path
 
-        subprocess.run(["javac", "-cp", os.path.abspath(os.path.join(__file__, "../mixins/*")),
+        subprocess.run(["javac", "-cp", os.path.abspath(os.path.join(__file__, "../../mixins/*")),
                         f"{_get_file_name(main_file)}.java"], cwd=path)  # Another hack :p
         return True, path
 
@@ -339,9 +342,12 @@ def _test_project(project_path: str, std_input: str, std_output: str, tries_left
     file_name = _get_file_name(main_class)
 
     try:
+        # Defining this here b/c very long
+        classpath = f"{os.path.abspath(project_path)}{';' if platform.system() == 'Windows' else ':'}{os.path.abspath(os.path.join(__file__, '../../mixins/*'))}"
+
         # A bunch of weird stuff with subprocess
-        proc = subprocess.run(["java", "-cp", os.path.abspath(os.path.join(__file__, "../mixins/*")), file_name],
-                              cwd=project_path, input=std_input, text=True, capture_output=True, timeout=10)
+        proc = subprocess.run(f"java -cp \"{classpath}\" {file_name}", cwd=os.path.abspath(project_path),
+                              input=std_input, text=True, capture_output=True, timeout=10)
 
         # Just normalizing the output
         resp = proc.stdout.strip().replace("\r\n", "\n")
