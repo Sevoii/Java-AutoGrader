@@ -261,7 +261,7 @@ def _get_file_name(path: str) -> str:
     return os.path.abspath(path).split("\\")[-1].split("/")[-1].rsplit(".", 1)[0]
 
 
-def _compile_project(path: str, mixins: Dict[str, List[Dict[str, str]]]) -> [bool, str]:
+def _compile_project(path: str, mixins: Dict[str, List[Dict[str, str]]]) -> Tuple[bool, str]:
     """
     Compile a single project (internal)
     :param path: Path to project
@@ -326,7 +326,7 @@ def compile_projects(projects_dir: str = "") -> None:
     executor.shutdown()
 
 
-def _test_project(project_path: str, std_input: str, std_output: str, tries_left=3) -> (bool, int):
+def _test_project(project_path: str, std_input: str, std_output: str, tries_left=3) -> Tuple[bool, int]:
     """
     Tests a project with an input and an output
     :param project_path: Path to project
