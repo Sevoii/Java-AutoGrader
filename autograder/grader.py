@@ -1,8 +1,8 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import json
-import re
 import os
 import platform
+import re
 import shutil
 import subprocess
 import time
@@ -23,7 +23,7 @@ def _read_cookies() -> List[Dict]:
     :return: List of cookies
     """
     cookies = []
-    with open(os.path.abspath(__file__ + "/../../config/cookies.txt"), 'r') as f:  # Cookie file
+    with open(os.path.abspath(os.path.join(__file__, "../../config/cookies.txt")), 'r') as f:  # Cookie file
         for e in f:
             e = e.strip()
             if e.startswith('#'):
@@ -105,18 +105,13 @@ def _unzip_and_clean(zip_path: str, folder_path: str) -> None:
     print(f"Finished unzipping project {folder_path}")
 
 
-def download_projects(*input_projects: str, download_dir: str = "") -> None:
+def download_projects(*input_projects: str, download_dir: str) -> None:
     """
     Given Input Projects Download, Unzip, & Delete unnecessary files :>
     :param input_projects: List of inputted projects
-    :param download_dir: Directory to download to, default `__file__ + "/../../projects"`
+    :param download_dir: Directory to download to
     :return: None
     """
-    if not download_dir:  # Default value
-        download_dir = os.path.abspath(__file__ + "/../../projects")
-    else:
-        download_dir = os.path.abspath(download_dir)
-
     projects = _get_valid_projects(input_projects)
 
     # Selenium requires absolute paths for download
@@ -205,7 +200,7 @@ def _inject_mixins(file_path: str, mixins: Dict[str, List[Dict[str, str]]]) -> b
     with open(file_path) as f:
         contents = f.read()
 
-    imports = "\n".join(f"import {i};" for i in mixins)  # precomputing b/c need to use later
+    imports = "\n".join(x for i in mixins if (x := f"import {i};") not in contents)
     if m := re.search(r"\s*package\s+.+;\n", contents):  # looking for package at start of file b/c imports after
         contents = contents[:m.end()] + imports + contents[m.end():]
     else:
@@ -292,21 +287,16 @@ def _get_projects(project_dir: str) -> str:
     :return: List of projects
     """
 
-    for path in sorted(os.listdir(project_dir), key=lambda x: int(x.split("-")[0]) if x != "tests" else 0):
-        if path == "tests":
-            continue
+    for path in sorted(os.listdir(project_dir), key=lambda x: int(x.split("-")[0])):
         yield f"{project_dir}/{path}"
 
 
-def compile_projects(projects_dir: str = "") -> None:
+def compile_projects(projects_dir: str) -> None:
     """
     Compiles all the projects in the project directory
-    :param projects_dir: Directory to projects, default `__file__ + "/../../projects"`
+    :param projects_dir: Directory to projects
     :return: None
     """
-    if not projects_dir:  # Default value
-        projects_dir = os.path.abspath(__file__ + "/../../projects")
-
     mixins = _load_mixins()
 
     executor = ThreadPoolExecutor(20)  # Only 20 threads cause :>
@@ -360,61 +350,34 @@ def _test_project(project_path: str, std_input: str, std_output: str, tries_left
             return False, 1
 
 
-def _get_tests(project_dir: str = os.path.abspath(__file__ + "/../../projects")) -> List[Tuple[str, str]]:
+def _get_tests(test_path: str) -> List[Dict[str, str]]:
     """
-    Gets all of the tests in directory
-    :param project_dir: Project Directory, default `__file__ + "/../../projects"`
-    :return: List of Tests & Outputs
+    Loads all the tests given a project name
+    :param test_path: Path to json file containing tests
+    :return: [{"input": "", "output": ""}]
     """
-    tests = []
+    if not os.path.exists(test_path):
+        raise RuntimeError("Test path not valid")  # Should be checked before, we are just going to check again
 
-    # Make sure there's actually a test dir :>
-    if not os.path.exists(f"{project_dir}/tests"):
-        raise RuntimeError("Could not find the `tests` dir, make sure it's there and you inputted the proper path")
-
-    for file in os.listdir(f"{project_dir}/tests"):
-        # Just skip over everything that isn't an .in :>
-        if not file.endswith(".in"):
-            continue
-
-        # Just a bunch of random stuff
-        test_name = _get_file_name(file)
-        temp_path = f"{project_dir}/tests/{test_name}"  # _get_file_name not meant to be used here but :>
-        if not os.path.exists(f"{temp_path}.in") or not os.path.exists(f"{temp_path}.out"):
-            print(f"Test `{test_name}` did not have a .in and .out file, please fix!")
-            continue
-
-        # Reading files
-        with open(f"{temp_path}.in", "r") as f:
-            temp_input = f.read().strip().replace("\n", "\n" + " " * 8192)  # Overflowing Scanner Buffer
-
-        with open(f"{temp_path}.out", "r") as f:
-            temp_output = f.read().strip()
-
-        tests.append((temp_input, temp_output))
-
-    print(f"Successfully loaded {len(tests)} tests")
-    return tests
+    with open(test_path) as f:
+        return json.load(f)
 
 
-def test_projects(projects_dir: str = "") -> Dict[str, List[Tuple[bool, int]]]:
+def test_projects(proj_path: str, test_path: str) -> Dict[str, List[Tuple[bool, int]]]:
     """
     Tests all projects in a directory
-    :param projects_dir: Project Directory, default `__file__ + "/../../projects"`
+    :param projects_dir: Project Directory
     :return: dict - project_name: [(success, exit_code)]
     """
-    if not projects_dir:  # Default value
-        projects_dir = os.path.abspath(__file__ + "/../../projects")
-
     executor = ThreadPoolExecutor(20)  # Only 30 threads cause why not :>
 
-    tests = _get_tests(projects_dir)  # Grabbing all the tests
+    tests = _get_tests(test_path)  # Grabbing all the tests
 
     # _get_file_name also not meant to be used here (works tho) :p
     # Ugly ass list comprehension, basically just creates an
     # project_name: [(success, exit_code), ...]
-    to_return = {_get_file_name(proj): [executor.submit(_test_project, proj, *t) for t in tests] for proj in
-                 _get_projects(projects_dir)}
+    to_return = {_get_file_name(proj): [executor.submit(_test_project, proj, t["input"], t["output"]) for t in tests]
+                 for proj in _get_projects(proj_path)}
 
     # Wait for everything to finish .-.
     for t in to_return.values():

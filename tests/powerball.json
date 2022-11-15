@@ -1,0 +1,22 @@
+[
+  {
+    "input": "52 32 41 18 29 23",
+    "output": "Enter your numbers: The winning number combination is:\n52\t\t32\t\t41\t\t18\t\t29\t\tPower Ball: 23\n\nYour number combination is:\n52\t\t32\t\t41\t\t18\t\t29\t\tPower Ball: 23\n\nCongratulations! Your Prize is $750!"
+  },
+  {
+    "input": "1 2 3 4 0 5",
+    "output": "Enter your numbers: Invalid ticket."
+  },
+  {
+    "input": "1 2 3 4 5 0",
+    "output": "Enter your numbers: Invalid ticket."
+  },
+  {
+    "input": "1 2 3 4 5 23",
+    "output": "Enter your numbers: The winning number combination is:\n52\t\t32\t\t41\t\t18\t\t29\t\tPower Ball: 23\n\nYour number combination is:\n1\t\t2\t\t3\t\t4\t\t5\t\tPower Ball: 23\n\nCongratulations! Your Prize is $500!"
+  },
+  {
+    "input": "52 1 1 18 1 23",
+    "output": "Enter your numbers: The winning number combination is:\n52\t\t32\t\t41\t\t18\t\t29\t\tPower Ball: 23\n\nYour number combination is:\n52\t\t1\t\t1\t\t18\t\t1\t\tPower Ball: 23\n\nCongratulations! Your Prize is $600!"
+  }
+]
