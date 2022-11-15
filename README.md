@@ -5,6 +5,8 @@ This repo aims to get a list of projects from repl.it and checks it against a st
 
 Although running locally right now, in the future I hope to expand this to use online methods, whether through onlinegdb or another java compiler.
 
+### THE CURRENT TEST YOU ARE RUNNING IS CALLED `powerball`
+
 ---
 
 ### How to Run
