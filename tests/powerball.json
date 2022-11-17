@@ -4,7 +4,31 @@
     "output": "Enter your numbers: The winning number combination is:\n52\t\t32\t\t41\t\t18\t\t29\t\tPower Ball: 23\n\nYour number combination is:\n52\t\t32\t\t41\t\t18\t\t29\t\tPower Ball: 23\n\nCongratulations! Your Prize is $750!"
   },
   {
+    "input": "52 1 36 18 19 23",
+    "output": "Enter your numbers: The winning number combination is:\n52\t\t32\t\t41\t\t18\t\t29\t\tPower Ball: 23\n\nYour number combination is:\n52\t\t1\t\t36\t\t18\t\t19\t\tPower Ball: 23\n\nCongratulations! Your Prize is $600!"
+  },
+  {
+    "input": "51 2 36 25 19 23",
+    "output": "Enter your numbers: The winning number combination is:\n52\t\t32\t\t41\t\t18\t\t29\t\tPower Ball: 23\n\nYour number combination is:\n51\t\t2\t\t36\t\t25\t\t19\t\tPower Ball: 23\n\nCongratulations! Your Prize is $500!"
+  },
+  {
+    "input": "52 32 41 18 29 1",
+    "output": "Enter your numbers: The winning number combination is:\n52\t\t32\t\t41\t\t18\t\t29\t\tPower Ball: 23\n\nYour number combination is:\n52\t\t32\t\t41\t\t18\t\t29\t\tPower Ball: 1\n\nCongratulations! Your Prize is $250!"
+  },
+  {
+    "input": "59 32 33 18 29 39",
+    "output": "Enter your numbers: The winning number combination is:\n52\t\t32\t\t41\t\t18\t\t29\t\tPower Ball: 23\n\nYour number combination is:\n59\t\t32\t\t33\t\t18\t\t29\t\tPower Ball: 39\n\nCongratulations! Your Prize is $150!"
+  },
+  {
+    "input": "22 18 36 7 6 13",
+    "output": "Enter your numbers: The winning number combination is:\n52\t\t32\t\t41\t\t18\t\t29\t\tPower Ball: 23\n\nYour number combination is:\n22\t\t18\t\t36\t\t7\t\t6\t\tPower Ball: 13\n\nSorry, you did not win."
+  },
+  {
     "input": "1 2 3 4 0 5",
+    "output": "Enter your numbers: Invalid ticket."
+  },
+  {
+    "input": "1 2 3 4 60 5",
     "output": "Enter your numbers: Invalid ticket."
   },
   {
@@ -12,11 +36,7 @@
     "output": "Enter your numbers: Invalid ticket."
   },
   {
-    "input": "1 2 3 4 5 23",
-    "output": "Enter your numbers: The winning number combination is:\n52\t\t32\t\t41\t\t18\t\t29\t\tPower Ball: 23\n\nYour number combination is:\n1\t\t2\t\t3\t\t4\t\t5\t\tPower Ball: 23\n\nCongratulations! Your Prize is $500!"
-  },
-  {
-    "input": "52 1 1 18 1 23",
-    "output": "Enter your numbers: The winning number combination is:\n52\t\t32\t\t41\t\t18\t\t29\t\tPower Ball: 23\n\nYour number combination is:\n52\t\t1\t\t1\t\t18\t\t1\t\tPower Ball: 23\n\nCongratulations! Your Prize is $600!"
+    "input": "1 2 3 4 5 40",
+    "output": "Enter your numbers: Invalid ticket."
   }
 ]
