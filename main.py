@@ -12,14 +12,14 @@ if input("Do you want to download projects (y/n): ").lower().strip() in ("yes", 
     proj_path = os.path.abspath(os.path.join(__file__, f"../projects/{proj_name}"))
 
     if not os.path.exists(test_path):
-        if input(f"There are no tests that match name {proj_name}. Continue?").lower() not in ("yes", "y", ""):
+        if input(f"There are no tests that match name {proj_name}, continue? ").lower() not in ("yes", "y", ""):
             exit(0)
 
     flag = input("Do you want to delete old projects: ").lower() in ("yes", "y")
 
     autograder.cleanup_folder(delete_existing=flag, projects_dir=proj_path)
 
-    projects = input("List Projects separated by spaces: ").strip().split(" ")
+    projects = input("List Replit links separated by spaces: ").strip().split(" ")
     autograder.download_projects(*projects, download_dir=proj_path)  # Could change this to just input a list
     autograder.compile_projects(projects_dir=proj_path)
 
