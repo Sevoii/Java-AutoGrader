@@ -1,3 +1,4 @@
+from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import json
 import os
@@ -6,7 +7,6 @@ import re
 import shutil
 import subprocess
 import time
-from typing import Optional, List, Dict, Tuple, Union
 import zipfile
 
 from selenium import webdriver
@@ -17,7 +17,7 @@ from autograder.setup import in_replit
 
 
 # I literally have no clue what this does
-def _read_cookies() -> List[Dict]:
+def _read_cookies() -> list[dict]:
     """
     Reads cookies from cookie file and returns a dict
     :return: List of cookies
@@ -36,7 +36,7 @@ def _read_cookies() -> List[Dict]:
     return cookies
 
 
-def _sanitize_url(link: str) -> Optional[str]:
+def _sanitize_url(link: str) -> str | None:
     """
     Extracted this function out b/c need to sanitize another url
     :param link: Link to sanitize
@@ -48,7 +48,7 @@ def _sanitize_url(link: str) -> Optional[str]:
         return temp[0]
 
 
-def _get_valid_projects(input_projects: Tuple[str]) -> List[str]:
+def _get_valid_projects(input_projects: tuple[str]) -> list[str]:
     """
     Returns the list of valid projects formatted correctly
     :param input_projects: List of inputted projects
@@ -178,7 +178,7 @@ def download_projects(*input_projects: str, download_dir: str) -> None:
     driver.quit()
 
 
-def _load_mixins() -> List[str]:
+def _load_mixins() -> list[str]:
     """
     Loads the mixins found in mixins/mixins.json
     :return: Mixins
@@ -187,7 +187,7 @@ def _load_mixins() -> List[str]:
         return json.load(f)
 
 
-def _inject_mixins(file_path: str, mixins: Dict[str, List[Dict[str, str]]]) -> bool:
+def _inject_mixins(file_path: str, mixins: dict[str, list[dict[str, str]]]) -> bool:
     """
     Injects mixins into a file
     :param file_path: Path of file to inject
@@ -216,7 +216,7 @@ def _inject_mixins(file_path: str, mixins: Dict[str, List[Dict[str, str]]]) -> b
     return True
 
 
-def _get_main_file(path: str) -> Optional[str]:
+def _get_main_file(path: str) -> str | None:
     """
     Gets the first instance of public static void main(String[] args)
     :param path: Path of he directory
@@ -256,7 +256,7 @@ def _get_file_name(path: str) -> str:
     return os.path.abspath(path).split("\\")[-1].split("/")[-1].rsplit(".", 1)[0]
 
 
-def _compile_project(path: str, mixins: Dict[str, List[Dict[str, str]]]) -> Tuple[bool, str]:
+def _compile_project(path: str, mixins: dict[str, list[dict[str, str]]]) -> tuple[bool, str]:
     """
     Compile a single project (internal)
     :param path: Path to project
@@ -316,7 +316,8 @@ def compile_projects(projects_dir: str) -> None:
     executor.shutdown()
 
 
-def _test_project(project_path: str, std_input: str, std_output: str, tries_left=3) -> Tuple[bool, int, str, str]:
+def _test_project(project_path: str, std_input: str, std_output: str, tries_left: int = 3) -> tuple[
+    bool, int, str, str]:
     """
     Tests a project with an input and an output
     :param project_path: Path to project
@@ -354,7 +355,7 @@ def _test_project(project_path: str, std_input: str, std_output: str, tries_left
             return False, -2, std_output, ""
 
 
-def _get_tests(test_path: str) -> List[Dict[str, str]]:
+def _get_tests(test_path: str) -> list[dict[str, str]]:
     """
     Loads all the tests given a project name
     :param test_path: Path to json file containing tests
@@ -367,7 +368,7 @@ def _get_tests(test_path: str) -> List[Dict[str, str]]:
         return json.load(f)
 
 
-def test_projects(proj_path: str, test_path: str) -> Dict[str, List[Tuple[bool, int]]]:
+def test_projects(proj_path: str, test_path: str) -> dict[str, list[tuple[bool, int]]]:
     """
     Tests all projects in a directory
     :param proj_path: Project Directory
