@@ -6,7 +6,7 @@ import re
 import shutil
 import subprocess
 import time
-from typing import Optional, List, Dict, Tuple
+from typing import Optional, List, Dict, Tuple, Union
 import zipfile
 
 from selenium import webdriver
@@ -316,18 +316,18 @@ def compile_projects(projects_dir: str) -> None:
     executor.shutdown()
 
 
-def _test_project(project_path: str, std_input: str, std_output: str, tries_left=3) -> Tuple[bool, int]:
+def _test_project(project_path: str, std_input: str, std_output: str, tries_left=3) -> Tuple[bool, int, str, str]:
     """
     Tests a project with an input and an output
     :param project_path: Path to project
     :param std_input: Input to supply
     :param std_output: Output Expected
     :param tries_left: Runs program this many tries before just returning a failure
-    :return: Test successful or not, exit code
+    :return: Test successful or not, exit code, std_output, real_output
     """
     main_class = _get_main_file(project_path)
     if not main_class:  # Returns false if main class isn't found
-        return False, -1
+        return False, -1, std_output, ""
 
     file_name = _get_file_name(main_class)
 
@@ -343,14 +343,15 @@ def _test_project(project_path: str, std_input: str, std_output: str, tries_left
                               input=std_input, text=True, capture_output=True, timeout=10, shell=True)
 
         # Just normalizing the output
-        resp = proc.stdout.strip().replace("\r\n", "\n")
-        return std_output == resp, proc.returncode
+        resp = (proc.stderr or proc.stdout).strip().replace("\r\n", "\n")
+
+        return std_output == resp, proc.returncode, std_output, resp
     except subprocess.TimeoutExpired:
         # Catching timeout error - retrying as necessary
         if tries_left > 0:
             return _test_project(project_path, std_input, std_output, tries_left=tries_left - 1)
         else:
-            return False, 1
+            return False, -2, std_output, ""
 
 
 def _get_tests(test_path: str) -> List[Dict[str, str]]:
@@ -380,10 +381,10 @@ def test_projects(proj_path: str, test_path: str) -> Dict[str, List[Tuple[bool, 
     # _get_file_name also not meant to be used here (works tho) :p
     # Ugly ass list comprehension, basically just creates an
     # {project_name: [(success, exit_code), ...]}
-    to_return = {_get_file_name(proj): executor.map(lambda x: _test_project(*x), 
+    to_return = {_get_file_name(proj): executor.map(lambda x: _test_project(*x),
                                                     ((proj, t["input"], t["output"]) for t in tests))
                  for proj in _get_projects(proj_path)}
-    
+
     # We submit eveything first and then wait for everything to finish 
     for t in to_return:
         to_return[t] = list(to_return[t])
