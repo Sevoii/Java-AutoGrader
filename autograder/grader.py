@@ -120,7 +120,7 @@ def download_projects(*input_projects: str, download_dir: str) -> None:
     chrome_options.add_experimental_option('prefs', prefs)
 
     # headless
-    chrome_options.headless = True
+    chrome_options.headless = not in_replit()
 
     if in_replit():  # We need these settings if we're running in replit
         chrome_options.add_argument('--no-sandbox')
@@ -373,7 +373,7 @@ def test_projects(proj_path: str, test_path: str) -> Dict[str, List[Tuple[bool, 
     :param test_path: Test File Path
     :return: dict - project_name: [(success, exit_code)]
     """
-    executor = ThreadPoolExecutor(20)  # Only 30 threads cause why not :>
+    executor = ThreadPoolExecutor(3 if in_replit() else 20)  # Only 3 threads in replit b/c lower system resources
 
     tests = _get_tests(test_path)  # Grabbing all the tests
 
@@ -381,7 +381,7 @@ def test_projects(proj_path: str, test_path: str) -> Dict[str, List[Tuple[bool, 
     # Ugly ass list comprehension, basically just creates an
     # {project_name: [(success, exit_code), ...]}
     to_return = {_get_file_name(proj): executor.map(lambda x: _test_project(*x), 
-                                                    ((proj, t["input"], t["output"]) for t in tests)) 
+                                                    ((proj, t["input"], t["output"]) for t in tests))
                  for proj in _get_projects(proj_path)}
     
     # We submit eveything first and then wait for everything to finish 
