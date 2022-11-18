@@ -1,5 +1,5 @@
 import autograder
-from colorama import Fore, Style
+from colorama import Fore, Back, Style
 import os
 
 
@@ -55,16 +55,20 @@ def main():
                 elif code != 0:
                     print(real_output)
                 else:
-                    std_output = repr(std_output)[1:-1].replace(" ", "_")
-                    real_output = repr(real_output)[1:-1].replace(" ", "_")
+                    std_output = repr(std_output)[1:-1]
+                    real_output = repr(real_output)[1:-1]
 
                     for j, (x, y) in enumerate(zip(std_output, real_output)):
                         if x != y:
-                            print(std_output[j - 5:j + 5], real_output[j - 5: j + 5], sep="\n", end="\n\n")
+                            print(f"Standard Output: {Back.LIGHTYELLOW_EX}{Fore.BLACK}{std_output[j - 17:j + 17]}{Style.RESET_ALL}",
+                                  f"    Your Output: {Back.LIGHTYELLOW_EX}{Fore.BLACK}{real_output[j - 17: j + 17]}{Style.RESET_ALL}",
+                                  sep="\n", end="\n\n")
                             break
                     else:
                         temp = min(len(std_output), len(real_output))
-                        print(std_output[temp - 5:], real_output[temp - 5:], sep="\n", end="\n\n")
+                        print(f"Standard Output: {Back.LIGHTYELLOW_EX}{Fore.BLACK}{std_output[temp - 17:]}{Style.RESET_ALL}",
+                              f"    Your Output: {Back.LIGHTYELLOW_EX}{Fore.BLACK}{real_output[temp - 17:]}{Style.RESET_ALL}",
+                              sep="\n", end="\n\n")
 
 
 if __name__ == "__main__":
