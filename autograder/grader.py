@@ -9,31 +9,9 @@ import subprocess
 import time
 import zipfile
 
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
+import requests
 
 from autograder.setup import in_replit
-
-
-# I literally have no clue what this does
-def _read_cookies() -> list[dict]:
-    """
-    Reads cookies from cookie file and returns a dict
-    :return: List of cookies
-    """
-    cookies = []
-    with open(os.path.abspath(os.path.join(__file__, "../../config/cookies.txt")), 'r') as f:  # Cookie file
-        for e in f:
-            e = e.strip()
-            if e.startswith('#'):
-                continue
-            k = e.split('\t')
-            if len(k) < 3:
-                continue  # not enough data
-            # with expiry
-            cookies.append({'name': k[-2], 'value': k[-1], 'expiry': int(k[-3])})
-    return cookies
 
 
 def _sanitize_url(link: str) -> str | None:
@@ -42,10 +20,11 @@ def _sanitize_url(link: str) -> str | None:
     :param link: Link to sanitize
     :return: Repl.it link w/o weird stuff messing with dl
     """
-    pattern = r"https://(?:(?:replit\.com)|(?:repl\.it))/(?:(?:@\w+/[^#?\s]+)|(?:join/[^#?\s]+))"
+    # pattern = r"https://(?:(?:replit\.com)|(?:repl\.it))/(?:(?:@\w+/[^#?\s]+)|(?:join/[^#?\s]+))"
+    pattern = r"https://(?:replit\.com|repl\.it)/@\w+/[^#?\s]+"
 
-    if temp := re.findall(pattern, link):
-        return temp[0]
+    if temp := re.search(pattern, link):
+        return temp.group()
 
 
 def _get_valid_projects(input_projects: tuple[str]) -> list[str]:
@@ -70,26 +49,25 @@ def _get_valid_projects(input_projects: tuple[str]) -> list[str]:
     return success
 
 
-def _unzip_and_clean(zip_path: str, folder_path: str) -> None:
+def _unzip_and_clean(zip_path: str) -> None:
     """
     Unzips the file at zip_path to folder_path and cleans up every non .java file
     :param zip_path: Path to zip file
-    :param folder_path: Path to folder
     :return: None
     """
-    print(f"Unzipping project {folder_path}")
+    print(f"Unzipping project {zip_path}")
 
     # Busy waiting for file to finish :p
     while not os.path.isfile(zip_path):
         time.sleep(1)
 
     with zipfile.ZipFile(zip_path) as f:  # Unzip zip file
-        f.extractall(folder_path)
+        f.extractall(zip_path[:-4])
 
     os.remove(zip_path)  # Delete zip file
 
     # Walking through directory, getting rid of anything not .java
-    walk = list(os.walk(folder_path))
+    walk = list(os.walk(zip_path[:-4]))
     for path, dirs, files in walk[::-1]:
         flag = False  # If java files or not
         for file in files:
@@ -102,7 +80,7 @@ def _unzip_and_clean(zip_path: str, folder_path: str) -> None:
         if len(os.listdir(path)) == 0 and not flag:
             os.rmdir(path)
 
-    print(f"Finished unzipping project {folder_path}")
+    print(f"Finished unzipping project {zip_path}")
 
 
 def download_projects(*input_projects: str, download_dir: str) -> None:
@@ -113,69 +91,44 @@ def download_projects(*input_projects: str, download_dir: str) -> None:
     :return: None
     """
     projects = _get_valid_projects(input_projects)
-
-    # Selenium requires absolute paths for download
-    chrome_options = webdriver.ChromeOptions()
-    prefs = {"download.default_directory": download_dir}
-    chrome_options.add_experimental_option('prefs', prefs)
-
-    # headless
-    chrome_options.headless = not in_replit()
-
-    if in_replit():  # We need these settings if we're running in replit
-        chrome_options.add_argument('--no-sandbox')
-        chrome_options.add_argument('--disable-dev-shm-usage')
-
-    if in_replit():  # Don't specify path if we're not in replit
-        driver = webdriver.Chrome(options=chrome_options)
-    else:
-        # I'm not sure if repl.it can use ChromeDriverManager but it works w/o
-        ser = Service(os.path.abspath(ChromeDriverManager().install()))
-        driver = webdriver.Chrome(service=ser, options=chrome_options)
-
-    driver.get("https://replit.com/")
-
-    # Loading cookies
-    for c in _read_cookies():
-        driver.add_cookie(c)
-
-    # Getting it again cause replit is DUMB >:(
-    driver.get("https://replit.com/~")
-
-    # It'll go to login page if cookies don't work
-    if driver.current_url == "https://replit.com/login":
-        driver.quit()
-        raise RuntimeError("Reset the cookies so you actually log in")
-
     temp_index = len(os.listdir(download_dir))  # Making so this is sorted by order you put this in :>
 
+    headers = {
+        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,""image/avif,image/webp," +
+                  "image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+        "accept-language": "en-US,en;q=0.9",
+        "cache-control": "no-cache",
+        "pragma": "no-cache",
+        "sec-ch-ua": "\"Google Chrome\";v=\"107\", \"Chromium\";v=\"107\", \"Not=A?Brand\";v=\"24\"",
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": "\"Windows\"",
+        "sec-fetch-dest": "document",
+        "sec-fetch-mode": "navigate",
+        "sec-fetch-site": "none",
+        "sec-fetch-user": "?1",
+        "service-worker-navigation-preload": "true",
+        "upgrade-insecure-requests": "1",
+        "cookie": f"connect.sid={os.environ.get('CONNECT_SID')}"
+    }
+
     for proj in projects:
-        driver.get(proj)
+        if formatted_url := _sanitize_url(proj):
+            resp = requests.get(f"{formatted_url}.zip", headers=headers)
 
-        if "404" in driver.title:  # Actually checking if link works
-            print(f"Could not get replit for project {proj}")
-            continue
+            if resp.status_code == 200:
+                *_, user, name = formatted_url.split("/")
+                download_path = os.path.abspath(f"{download_dir}/{temp_index}-{user}-{name}.zip")
 
-        formatted = _sanitize_url(f"{driver.current_url}")
-        if not formatted:  # This really shouldn't happen but it'll be fine
-            print(f"This should not occur! Could not sanitize url {driver.current_url}?")
-            continue
+                with open(download_path, "wb") as f:
+                    f.write(resp.content)
 
-        new_url = f"{formatted}.zip"  # Zipped url :>
-        driver.get(new_url)
+                _unzip_and_clean(zip_path=download_path)
 
-        if driver.current_url != new_url:  # It won't redirect if it's downloading
-            *_, user, name = formatted.split("/")
-
-            # Doing this now so we can limit how fast we download
-            _unzip_and_clean(os.path.abspath(f"{download_dir}/{name}.zip"),
-                             os.path.abspath(f"{download_dir}/{temp_index}-{user}-{name}"))
-            temp_index += 1
+                temp_index += 1
+            else:
+                print(f"Could not get replit for project {proj}. Maybe cookie error?")
         else:
-            print(f"Could not get download zip for project {proj}")
-
-    # Cleaning up
-    driver.quit()
+            print(f"Could not get replit for project {proj}. Url formatted wrong.")
 
 
 def _load_mixins() -> list[str]:
@@ -316,8 +269,8 @@ def compile_projects(projects_dir: str) -> None:
     executor.shutdown()
 
 
-def _test_project(project_path: str, std_input: str, std_output: str, tries_left: int = 3) -> tuple[
-    bool, int, str, str]:
+def _test_project(project_path: str, std_input: str, std_output: str,
+                  tries_left: int = 3) -> tuple[bool, int, str, str]:
     """
     Tests a project with an input and an output
     :param project_path: Path to project
