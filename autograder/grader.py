@@ -229,7 +229,7 @@ def _compile_project(path: str, mixins: dict[str, list[dict[str, str]]]) -> tupl
                         return False, path
 
         subprocess.run(["javac", "-cp", os.path.abspath(os.path.join(__file__, "../../mixins/*")),
-                        f"{_get_file_name(main_file)}.java"], cwd=path)  # Another hack :p
+                        f"{_get_file_name(main_file)}.java"], cwd=path, shell=True)  # Another hack :p
         return True, path
 
 
