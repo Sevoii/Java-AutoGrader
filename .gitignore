@@ -7,3 +7,4 @@ venv
 !/projects/*/tests
 
 mixins/blah/*
+.env
