@@ -228,8 +228,9 @@ def _compile_project(path: str, mixins: dict[str, list[dict[str, str]]]) -> tupl
                     if not _inject_mixins(os.path.join(path, file), mixins):
                         return False, path
 
-        subprocess.run(["javac", "-cp", os.path.abspath(os.path.join(__file__, "../../mixins/*")),
-                        f"{_get_file_name(main_file)}.java"], cwd=path, shell=True)  # Another hack :p
+        classpath = os.path.abspath(os.path.join(__file__, "../../mixins/*"))
+        file_name = f"{_get_file_name(main_file)}.java"
+        subprocess.run(f"javac -cp \"{classpath}\" {file_name}", cwd=path, shell=True)
         return True, path
 
 
