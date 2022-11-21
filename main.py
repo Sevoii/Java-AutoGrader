@@ -38,7 +38,7 @@ def main():
         resp = autograder.test_projects(proj_path=proj_path, test_path=test_path)
         for i, j in resp.items():
             print(
-                f"Project `{i}` passed {sum(k[0] for k in j)}/{len(j)} Tests: {''.join([f'{Fore.RED}X', f'{Fore.BLUE}✓'][m[0]] for m in j)}{Style.RESET_ALL}"
+                f"Project `{i}` passed {sum(k[0] for k in j)}/{len(j)} Tests: {''.join([f'{Fore.RED}X', f'{Fore.GREEN}✓'][m[0]] for m in j)}{Style.RESET_ALL}"
             )
 
         if len(resp) == 1:
@@ -60,15 +60,12 @@ def main():
 
                     for j, (x, y) in enumerate(zip(std_output, real_output)):
                         if x != y:
-                            print(f"Standard Output: {Back.LIGHTYELLOW_EX}{Fore.BLACK}{std_output[j - 17:j + 17]}{Style.RESET_ALL}",
-                                  f"    Your Output: {Back.LIGHTYELLOW_EX}{Fore.BLACK}{real_output[j - 17: j + 17]}{Style.RESET_ALL}",
-                                  sep="\n", end="\n\n")
                             break
-                    else:
-                        temp = min(len(std_output), len(real_output))
-                        print(f"Standard Output: {Back.LIGHTYELLOW_EX}{Fore.BLACK}{std_output[temp - 17:]}{Style.RESET_ALL}",
-                              f"    Your Output: {Back.LIGHTYELLOW_EX}{Fore.BLACK}{real_output[temp - 17:]}{Style.RESET_ALL}",
-                              sep="\n", end="\n\n")
+                    print(
+                        f"Standard Output: {Back.LIGHTYELLOW_EX}{Fore.BLACK}{std_output[max(j - 17, 0):j + 17]}{Style.RESET_ALL}",
+                        f"    Your Output: {Back.LIGHTYELLOW_EX}{Fore.BLACK}{real_output[max(j - 17, 0): j + 17]}{Style.RESET_ALL}",
+                        sep="\n", end="\n\n"
+                    )
 
 
 if __name__ == "__main__":
