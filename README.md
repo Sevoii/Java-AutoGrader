@@ -16,15 +16,16 @@ through onlinegdb or another java compiler.
 2. Open [repl.it](https://replit.com/~) and create a new `Python` repl
 3. Unzip the folder you downloaded and drag the contents onto the repl (Make sure the main.py overwrites the current
    main.py)
-4. On the right side, click shell and run `java -version`
-5. When it prompts you to select a java version, select the `adoptopenjdk-openj9-bin-16`
+4. Alternatively, when creating a new repl click `Import from GitHub` and follow the instructions
+5. On the right side, click shell and run `java -version`
+6. When it prompts you to select a java version, select the `adoptopenjdk-openj9-bin-16`
    ![Step 5](https://files.catbox.moe/30cd7g.png)
-6. Read [here](https://github.com/Chitaso/Java-AutoGrader/tree/master#how-to-get-connectsid-cookie) to read how to get
+7. Read [here](https://github.com/Chitaso/Java-AutoGrader/tree/master#how-to-get-connectsid-cookie) to read how to get
    your connect.sid cookie
-7. Add a secret to your repl. On the left handed bar, click the padlock icon, and put `CONNECT_SID` where the key is,
+8. Add a secret to your repl. On the left handed bar, click the padlock icon, and put `CONNECT_SID` where the key is,
    and the cookie you just grabbed in the value section.
    ![Step7](https://files.catbox.moe/1yljn8.png)
-8. Click in the green run button at the top
+9. Click in the green run button at the top
 
 ---
 
