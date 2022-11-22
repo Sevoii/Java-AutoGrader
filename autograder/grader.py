@@ -6,7 +6,6 @@ import platform
 import re
 import shutil
 import subprocess
-import time
 import zipfile
 
 import requests
@@ -57,10 +56,6 @@ def _unzip_and_clean(zip_path: str) -> None:
     """
     print(f"Unzipping project {zip_path}")
 
-    # Busy waiting for file to finish :p
-    while not os.path.isfile(zip_path):
-        time.sleep(1)
-
     with zipfile.ZipFile(zip_path) as f:  # Unzip zip file
         f.extractall(zip_path[:-4])
 
@@ -77,7 +72,7 @@ def _unzip_and_clean(zip_path: str) -> None:
                 flag = True
 
         # no .java files and no files = empty folder :>
-        if len(os.listdir(path)) == 0 and not flag:
+        if not os.listdir(path) and not flag:
             os.rmdir(path)
 
     print(f"Finished unzipping project {zip_path}")
@@ -94,14 +89,14 @@ def download_projects(*input_projects: str, download_dir: str) -> None:
     temp_index = len(os.listdir(download_dir))  # Making so this is sorted by order you put this in :>
 
     headers = {
-        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,""image/avif,image/webp," +
+        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,"
                   "image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
         "accept-language": "en-US,en;q=0.9",
         "cache-control": "no-cache",
         "pragma": "no-cache",
-        "sec-ch-ua": "\"Google Chrome\";v=\"107\", \"Chromium\";v=\"107\", \"Not=A?Brand\";v=\"24\"",
+        "sec-ch-ua": '"Google Chrome";v="107", "Chromium";v="107", "Not=A?Brand";v="24"',
         "sec-ch-ua-mobile": "?0",
-        "sec-ch-ua-platform": "\"Windows\"",
+        "sec-ch-ua-platform": ''"Windows"'',
         "sec-fetch-dest": "document",
         "sec-fetch-mode": "navigate",
         "sec-fetch-site": "none",
@@ -230,7 +225,7 @@ def _compile_project(path: str, mixins: dict[str, list[dict[str, str]]]) -> tupl
 
         classpath = os.path.abspath(os.path.join(__file__, "../../mixins/*"))
         file_name = f"{_get_file_name(main_file)}.java"
-        subprocess.run(f"javac -cp \"{classpath}\" {file_name}", cwd=path, shell=True)
+        subprocess.run(f'javac -cp "{classpath}" {file_name}', cwd=path, shell=True)
         return True, path
 
 
@@ -294,7 +289,7 @@ def _test_project(project_path: str, std_input: str, std_output: str,
         classpath = f"{os.path.abspath(project_path)}{separator}{os.path.abspath(mixins_path)}"
 
         # A bunch of weird stuff with subprocess
-        proc = subprocess.run(f"java -cp \"{classpath}\" {file_name}", cwd=os.path.abspath(project_path),
+        proc = subprocess.run(f'java -cp "{classpath}" {file_name}', cwd=os.path.abspath(project_path),
                               input=std_input, text=True, capture_output=True, timeout=10, shell=True)
 
         # Just normalizing the output
@@ -336,9 +331,12 @@ def test_projects(proj_path: str, test_path: str) -> dict[str, list[tuple[bool, 
     # _get_file_name also not meant to be used here (works tho) :p
     # Ugly ass list comprehension, basically just creates an
     # {project_name: [(success, exit_code), ...]}
-    to_return = {_get_file_name(proj): executor.map(lambda x: _test_project(*x),
-                                                    ((proj, t["input"], t["output"]) for t in tests))
-                 for proj in _get_projects(proj_path)}
+    to_return = {
+        _get_file_name(proj): executor.map(
+            lambda x: _test_project(*x),
+            ((proj, t["input"], t["output"]) for t in tests)
+        ) for proj in _get_projects(proj_path)
+    }
 
     # We submit eveything first and then wait for everything to finish 
     for t in to_return:

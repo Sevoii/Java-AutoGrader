@@ -57,18 +57,16 @@ def main():
                 else:
                     std_output = repr(std_output)[1:-1]
                     real_output = repr(real_output)[1:-1]
+                    j = 0  # Getting PyCharm to stop yelling at me
 
                     for j, (x, y) in enumerate(zip(std_output, real_output)):
                         if x != y:
-                            print(f"Standard Output: {Back.LIGHTYELLOW_EX}{Fore.BLACK}{std_output[j - 17:j + 17]}{Style.RESET_ALL}",
-                                  f"    Your Output: {Back.LIGHTYELLOW_EX}{Fore.BLACK}{real_output[j - 17: j + 17]}{Style.RESET_ALL}",
-                                  sep="\n", end="\n\n")
                             break
-                    else:
-                        temp = min(len(std_output), len(real_output))
-                        print(f"Standard Output: {Back.LIGHTYELLOW_EX}{Fore.BLACK}{std_output[temp - 17:]}{Style.RESET_ALL}",
-                              f"    Your Output: {Back.LIGHTYELLOW_EX}{Fore.BLACK}{real_output[temp - 17:]}{Style.RESET_ALL}",
-                              sep="\n", end="\n\n")
+
+                    print(
+                        f"Standard Output: {Back.LIGHTYELLOW_EX}{Fore.BLACK}{std_output[max(j - 17, 0):j + 17]}{Style.RESET_ALL}",
+                        f"    Your Output: {Back.LIGHTYELLOW_EX}{Fore.BLACK}{real_output[max(j - 17, 0): j + 17]}{Style.RESET_ALL}",
+                        sep="\n", end="\n\n")
 
 
 if __name__ == "__main__":

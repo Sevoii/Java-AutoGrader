@@ -2,7 +2,7 @@ import os
 import shutil
 
 
-def cleanup_folder(projects_dir: str, delete_existing=True) -> None:
+def cleanup_folder(projects_dir: str, delete_existing: bool = True) -> None:
     """
     Cleans up the directory
     :param projects_dir: Directory to clean up
@@ -17,5 +17,9 @@ def cleanup_folder(projects_dir: str, delete_existing=True) -> None:
                 shutil.rmtree(f"{projects_dir}/{p}", ignore_errors=True)
 
 
-def in_replit():
+def in_replit() -> bool:
+    """
+    Checks for precense of .replit file
+    :return: If in replit or not
+    """
     return os.path.exists(os.path.abspath(os.path.join(__file__, "../../.replit")))
