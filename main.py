@@ -22,7 +22,7 @@ def main():
         autograder.cleanup_folder(delete_existing=flag, projects_dir=proj_path)
 
         projects = input("List Replit links separated by spaces: ").strip().split(" ")
-        autograder.download_projects(*projects, download_dir=proj_path)  # Could change this to just input a list
+        autograder.download_projects(projects, download_dir=proj_path)  # Could change this to just input a list
         autograder.compile_projects(projects_dir=proj_path)
 
     if input("Do you want to test projects (y/n): ").lower().strip() in ("yes", "y"):

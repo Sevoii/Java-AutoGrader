@@ -26,7 +26,7 @@ def _sanitize_url(link: str) -> str | None:
         return temp.group()
 
 
-def _get_valid_projects(input_projects: tuple[str]) -> list[str]:
+def _get_valid_projects(input_projects: list[str]) -> list[str]:
     """
     Returns the list of valid projects formatted correctly
     :param input_projects: List of inputted projects
@@ -78,7 +78,7 @@ def _unzip_and_clean(zip_path: str) -> None:
     print(f"Finished unzipping project {zip_path}")
 
 
-def download_projects(*input_projects: str, download_dir: str) -> None:
+def download_projects(input_projects: list[str], download_dir: str) -> None:
     """
     Given Input Projects Download, Unzip, & Delete unnecessary files :>
     :param input_projects: List of inputted projects
@@ -87,24 +87,7 @@ def download_projects(*input_projects: str, download_dir: str) -> None:
     """
     projects = _get_valid_projects(input_projects)
     temp_index = len(os.listdir(download_dir))  # Making so this is sorted by order you put this in :>
-
-    headers = {
-        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,"
-                  "image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-        "accept-language": "en-US,en;q=0.9",
-        "cache-control": "no-cache",
-        "pragma": "no-cache",
-        "sec-ch-ua": '"Google Chrome";v="107", "Chromium";v="107", "Not=A?Brand";v="24"',
-        "sec-ch-ua-mobile": "?0",
-        "sec-ch-ua-platform": ''"Windows"'',
-        "sec-fetch-dest": "document",
-        "sec-fetch-mode": "navigate",
-        "sec-fetch-site": "none",
-        "sec-fetch-user": "?1",
-        "service-worker-navigation-preload": "true",
-        "upgrade-insecure-requests": "1",
-        "cookie": f"connect.sid={os.environ.get('CONNECT_SID')}"
-    }
+    headers = {"cookie": f"connect.sid={os.environ.get('CONNECT_SID')}"}
 
     for proj in projects:
         if formatted_url := _sanitize_url(proj):
@@ -229,15 +212,13 @@ def _compile_project(path: str, mixins: dict[str, list[dict[str, str]]]) -> tupl
         return True, path
 
 
-def _get_projects(project_dir: str) -> str:
+def _get_projects(project_dir: str) -> list[str]:
     """
     Generator for all the projects in a directory, literally only used to iterate over tests
     :param project_dir: Path of project>s< directory
     :return: List of projects
     """
-
-    for path in sorted(os.listdir(project_dir), key=lambda x: int(x.split("-")[0])):
-        yield f"{project_dir}/{path}"
+    return [f"{project_dir}/{path}" for path in sorted(os.listdir(project_dir), key=lambda x: int(x.split("-")[0]))]
 
 
 def compile_projects(projects_dir: str) -> None:
@@ -294,7 +275,6 @@ def _test_project(project_path: str, std_input: str, std_output: str,
 
         # Just normalizing the output
         resp = (proc.stderr or proc.stdout).strip().replace("\r\n", "\n")
-
         return std_output == resp, proc.returncode, std_output, resp
     except subprocess.TimeoutExpired:
         # Catching timeout error - retrying as necessary
