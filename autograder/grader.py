@@ -7,6 +7,7 @@ import platform
 import re
 import shutil
 import subprocess
+from tqdm import tqdm
 import zipfile
 
 import requests
@@ -90,7 +91,7 @@ def download_projects(input_projects: list[str], download_dir: str) -> None:
     temp_index = len(os.listdir(download_dir))  # Making so this is sorted by order you put this in :>
     headers = {"cookie": f"connect.sid={os.environ.get('CONNECT_SID')}"}
 
-    for proj in projects:
+    for proj in tqdm(projects):
         if formatted_url := _sanitize_url(proj):
             resp = requests.get(f"{formatted_url}.zip", headers=headers)
 
@@ -237,7 +238,7 @@ def compile_projects(projects_dir: str) -> None:
         futures.append(executor.submit(_compile_project, proj, mixins))
 
     # Wait as all the futures get completed
-    for f in as_completed(futures):
+    for f in tqdm(as_completed(futures)):
         success, path = f.result()
 
         if not success:
@@ -320,7 +321,7 @@ def test_projects(proj_path: str, test_path: str) -> dict[str, list[tuple[bool, 
     }
 
     # We submit eveything first and then wait for everything to finish 
-    for t in to_return:
+    for t in tqdm(to_return):
         to_return[t] = list(to_return[t])
 
     executor.shutdown()
