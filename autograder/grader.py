@@ -1,4 +1,5 @@
 from __future__ import annotations
+from colorama import Fore, Style
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import json
 import os
@@ -75,7 +76,7 @@ def _unzip_and_clean(zip_path: str) -> None:
         if not os.listdir(path) and not flag:
             os.rmdir(path)
 
-    print(f"Finished unzipping project {zip_path}")
+    print(f"{Fore.GREEN}Finished unzipping project {zip_path}{Style.RESET_ALL}")
 
 
 def download_projects(input_projects: list[str], download_dir: str) -> None:
@@ -104,9 +105,9 @@ def download_projects(input_projects: list[str], download_dir: str) -> None:
 
                 temp_index += 1
             else:
-                print(f"Could not get replit for project {proj}. Maybe cookie error?")
+                print(f"{Fore.RED}Could not get replit for project {proj}. Maybe cookie error?{Style.RESET_ALL}")
         else:
-            print(f"Could not get replit for project {proj}. Url formatted wrong.")
+            print(f"{Fore.RED}Could not get replit for project {proj}. Url formatted wrong.{Style.RESET_ALL}")
 
 
 def _load_mixins() -> list[str]:
@@ -240,7 +241,7 @@ def compile_projects(projects_dir: str) -> None:
         success, path = f.result()
 
         if not success:
-            print(f"Unsuccessful compilation of {path}")
+            print(f"{Fore.RED}Unsuccessful compilation of {path}{Style.RESET_ALL}")
             shutil.rmtree(path, ignore_errors=True)  # Deletes entire folder :skull:
 
     executor.shutdown()
