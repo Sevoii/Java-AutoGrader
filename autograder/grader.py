@@ -256,7 +256,7 @@ def _test_project(project_path: str, std_input: str, std_output: str,
     :param std_input: Input to supply
     :param std_output: Output Expected
     :param tries_left: Runs program this many tries before just returning a failure
-    :return: Test successful or not, exit code, std_output, real_output
+    :return: Test successful or not, exit code, std_output, real_output, numbers_matching
     """
     main_class = _get_main_file(project_path)
     if not main_class:  # Returns false if main class isn't found
@@ -277,13 +277,19 @@ def _test_project(project_path: str, std_input: str, std_output: str,
 
         # Just normalizing the output
         resp = (proc.stderr or proc.stdout).strip().replace("\r\n", "\n")
-        return std_output == resp, proc.returncode, std_output, resp
+        
+        try:
+            matching = all(map(lambda x: x[0] == x[1], zip(re.findall(r"\d+", resp), re.findall(r"\d+", std_output), strict=True)))
+        except ValueError:
+            matching = False
+
+        return std_output == resp, proc.returncode, std_output, resp, matching
     except subprocess.TimeoutExpired:
         # Catching timeout error - retrying as necessary
         if tries_left > 0:
             return _test_project(project_path, std_input, std_output, tries_left=tries_left - 1)
         else:
-            return False, -2, std_output, ""
+            return False, -2, std_output, "", False
 
 
 def _get_tests(test_path: str) -> list[dict[str, str]]:
